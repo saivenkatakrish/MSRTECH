@@ -1,64 +1,42 @@
-#include <FirebaseESP8266.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266Firebase.h> // Correct library
 
-#define _SSID "emobility"                  // Your WiFi SSID
-#define _PASSWORD "srkr@1980"        // Your WiFi Password
-#define FIREBASE_HOST "e-bms-80fc0-default-rtdb.asia-southeast1.firebasedatabase.app"  // Firebase URL without "https://"
-#define FIREBASE_AUTH "" // Your Firebase Database Secret (can be empty if not required)
+// Replace with your Wi-Fi credentials
+#define WIFI_SSID "G Pavani"
+#define WIFI_PASSWORD "pavani@18"
 
-// Initialize Firebase
-FirebaseData firebaseData;
-FirebaseConfig firebaseConfig;
-FirebaseAuth firebaseAuth;
+// Firebase settings
+#define REFERENCE_URL "https://esp2serial-default-rtdb.firebaseio.com/" // Firebase Database URL
 
-void setup() 
-{
-  Serial.begin(9600);
-  WiFi.begin(_SSID, _PASSWORD);
-  
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
+Firebase firebase(REFERENCE_URL);  // Initialize Firebase with the URL
+
+void setup() {
+  // Initialize Serial Monitor
+  Serial.begin(115200);
+
+  // Connect to Wi-Fi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
+    delay(500);
   }
-
-  Serial.println("");
-  Serial.println("WiFi Connected");
-
-  // Print the IP address
-  Serial.print("IP Address: ");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
-
-  // Setup Firebase
-  firebaseConfig.api_key = FIREBASE_AUTH; // Add your Firebase Auth Key here if needed
-  firebaseConfig.database_url = FIREBASE_HOST;
-
-  Firebase.begin(&firebaseConfig, &firebaseAuth);
-  Firebase.reconnectWiFi(true);
+  Serial.println();
+  Serial.println("Connected to Wi-Fi");
 }
 
-void loop() 
-{
-  
-  if (Firebase.getInt(firebaseData, "/BinaryValue1")) {
-    int value1 = firebaseData.intData();
-    Serial.print("Binary Value 1: ");
-    Serial.println(value1);
+void loop() {
+  // Retrieve the string value from Firebase
+  String valueStr = firebase.getString("/Input");  // Replace "/test" with your path
+
+  if (valueStr.length() > 0) {
+    int value = valueStr.toInt();  // Convert the string to an integer if needed
+    Serial.print("Value from Firebase: ");
+    Serial.println(value);
   } else {
-    Serial.print("Failed to get Binary Value 1: ");
-    Serial.println(firebaseData.errorReason());
+    Serial.println("Failed to get data from Firebase or empty data.");
   }
 
-  if (Firebase.getInt(firebaseData, "/BinaryValue2")) {
-    int value2 = firebaseData.intData();
-    Serial.print("Binary Value 2: ");
-    Serial.println(value2);
-  } else {
-    Serial.print("Failed to get Binary Value 2: ");
-    Serial.println(firebaseData.errorReason());
-  }
-
-
-  delay(2000); // Adjust delay as needed
+  // Delay for 2 seconds before the next read
+  delay(2000);
 }
